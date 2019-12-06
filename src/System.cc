@@ -25,6 +25,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <fstream>
 
 static bool has_suffix(const std::string &str, const std::string &suffix)
 {
@@ -345,6 +346,48 @@ void System::Shutdown()
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
     if (is_save_map)
         SaveMap(mapfile);
+
+    // Kwame: Print out some stats
+    {
+        std::vector<KeyFrame *> kfs = mpMap->GetAllKeyFrames();
+        std::vector<MapPoint *> mps = mpMap->GetAllMapPoints();
+        std::vector<MapPoint *> rmps = mpMap->GetReferenceMapPoints();
+
+        ofstream sf;
+        sf.open("stats.txt", ios::out | ios::trunc);
+
+        sf << "## STATS" << std::endl;
+        sf << "# nKeyFrames nMapPoints nReferenceMapPoints" << std::endl;
+
+        // Count valid keyframes
+        unsigned int nValidKeyFrames = 0;
+        for (auto it:kfs)
+        {
+            if (!it->isBad())
+                ++nValidKeyFrames;
+        }
+
+        // Count valid map points
+        unsigned int nValidMapPoints = 0;
+        for (auto it:mps)
+        {
+            if (!it->isBad())
+                ++nValidMapPoints;
+        }
+
+        // Count valid reference map points
+        unsigned int nValidRefMapPoints = 0;
+        for (auto it:rmps)
+        {
+            if (!it->isBad())
+                ++nValidRefMapPoints;
+        }
+
+        sf << "filtered: " << nValidKeyFrames << " " << nValidMapPoints << " " << nValidRefMapPoints << std::endl;
+        sf << "unfiltered: " << kfs.size() << " " << mps.size() << " " << rmps.size() << std::endl;
+
+        sf.close();
+    }
 }
 
 void System::SaveTrajectoryTUM(const string &filename)
