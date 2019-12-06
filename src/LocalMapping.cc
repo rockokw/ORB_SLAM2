@@ -23,7 +23,8 @@
 #include "ORBmatcher.h"
 #include "Optimizer.h"
 
-#include<mutex>
+#include <fstream>
+#include <mutex>
 
 namespace ORB_SLAM2
 {
@@ -108,6 +109,17 @@ void LocalMapping::Run()
         std::this_thread::sleep_for(std::chrono::microseconds(3000));
     }
 
+    //Kwame: write match counts to file
+    {
+        ofstream mcf;
+        mcf.open("mp_match_count.txt", ios::out | ios::trunc);
+
+        for (auto&& i: mlMapPointMatchCount)
+            mcf << i << std::endl;
+
+        mcf.close();
+    }
+
     SetFinish();
 }
 
@@ -139,6 +151,7 @@ void LocalMapping::ProcessNewKeyFrame()
     // Associate MapPoints to the new keyframe and update normal and descriptor
     const vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
 
+    unsigned int count = 0;
     for(size_t i=0; i<vpMapPointMatches.size(); i++)
     {
         MapPoint* pMP = vpMapPointMatches[i];
@@ -151,6 +164,7 @@ void LocalMapping::ProcessNewKeyFrame()
                     pMP->AddObservation(mpCurrentKeyFrame, i);
                     pMP->UpdateNormalAndDepth();
                     pMP->ComputeDistinctiveDescriptors();
+                    ++count;
                 }
                 else // this can only happen for new stereo points inserted by the Tracking
                 {
@@ -159,6 +173,8 @@ void LocalMapping::ProcessNewKeyFrame()
             }
         }
     }    
+
+    mlMapPointMatchCount.push_back(count);  //Kwame: track match count
 
     // Update links in the Covisibility Graph
     mpCurrentKeyFrame->UpdateConnections();
