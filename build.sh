@@ -33,6 +33,8 @@ make -j
 cd ..
 
 cd Vocabulary
-echo "Converting vocabulary to binary version"
-./bin_vocabulary
+if [ ! -f ORBvoc.bin ]; then
+    echo "Converting vocabulary to binary version"
+    ./bin_vocabulary
+fi
 cd ..
