@@ -347,6 +347,9 @@ void System::Shutdown()
     if (is_save_map)
         SaveMap(mapfile);
 
+    // Kwame: close open files, etc.
+    mpTracker->Cleanup();
+
     // Kwame: Print out some stats
     {
         std::vector<KeyFrame *> kfs = mpMap->GetAllKeyFrames();
@@ -361,10 +364,20 @@ void System::Shutdown()
 
         // Count valid keyframes
         unsigned int nValidKeyFrames = 0;
-        for (auto it:kfs)
         {
-            if (!it->isBad())
-                ++nValidKeyFrames;
+            ofstream kf;
+            kf.open("keyframes.txt", ios::out | ios::trunc);
+
+            for (auto it:kfs)
+            {
+                if (!it->isBad())
+                    ++nValidKeyFrames;
+
+                // Save keyframe IDs
+                kf << it->mnId << " " << it->mnFrameId << endl;
+            }
+
+            kf.close();
         }
 
         // Count valid map points
@@ -388,6 +401,7 @@ void System::Shutdown()
 
         sf.close();
     }
+
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

@@ -51,7 +51,7 @@ class LoopClosing;
 class System;
 
 class Tracking
-{  
+{
 
 public:
 
@@ -116,6 +116,8 @@ public:
 
     void Reset();
 
+    void Cleanup();
+
 protected:
 
     // Main tracking function. It is independent of the input sensor.
@@ -170,10 +172,10 @@ protected:
     KeyFrame* mpReferenceKF;
     std::vector<KeyFrame*> mvpLocalKeyFrames;
     std::vector<MapPoint*> mvpLocalMapPoints;
-    
+
     // System
     System* mpSystem;
-    
+
     //Drawers
     Viewer* mpViewer;
     FrameDrawer* mpFrameDrawer;
@@ -215,6 +217,8 @@ protected:
     bool mbRGB;
 
     list<MapPoint*> mlpTemporalPoints;
+
+    ofstream mfMC;   //Kwame: stream for MapPoint match counts
 };
 
 } //namespace ORB_SLAM

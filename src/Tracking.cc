@@ -147,6 +147,13 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     }
     if (bReuseMap)
         mState = LOST;
+
+    mfMC.open("mp_match_count.txt", ios::out | ios::trunc);
+}
+
+void Tracking::Cleanup()
+{
+    mfMC.close();
 }
 
 void Tracking::SetLocalMapper(LocalMapping *pLocalMapper)
@@ -286,6 +293,9 @@ void Tracking::Track()
 
         mpFrameDrawer->Update(this);
 
+        // Kwame: This is an initialization frame
+        mfMC << mCurrentFrame.mnId << " 0" << endl;
+
         if(mState!=OK)
             return;
     }
@@ -415,6 +425,28 @@ void Tracking::Track()
         else
             mState=LOST;
 
+        // Kwame: Count MapPoints matches
+        {
+            int nMatches = 0;
+            if (mCurrentFrame.mnId != mLastFrame.mnId)
+            {
+                for(int i=0; i<mCurrentFrame.N; i++)
+                {
+                    MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
+                    if (pMP && (pMP->Observations()>0))
+                        if (!mCurrentFrame.mvbOutlier[i])
+                            ++nMatches;
+                }
+            }
+            else
+            {
+                // This is the initialization frame
+                cout << "#K# setting 0 matches for initialization frame "
+                    << mCurrentFrame.mnId << endl;
+            }
+            mfMC << mCurrentFrame.mnId << " " << nMatches << endl;
+        }
+
         // Update drawer
         mpFrameDrawer->Update(this);
 
@@ -474,7 +506,7 @@ void Tracking::Track()
         {
             if(mpMap->KeyFramesInMap()<=5)
             {
-                cout << "Track lost soon after initialisation, reseting..." << endl;
+                cout << "Track lost soon after initialization, resetting..." << endl;
                 mpSystem->Reset();
                 return;
             }
@@ -918,7 +950,7 @@ bool Tracking::TrackWithMotionModel()
             else if(mCurrentFrame.mvpMapPoints[i]->Observations()>0)
                 nmatchesMap++;
         }
-    }    
+    }
 
     if(mbOnlyTracking)
     {

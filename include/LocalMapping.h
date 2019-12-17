@@ -121,8 +121,6 @@ protected:
 
     bool mbAcceptKeyFrames;
     std::mutex mMutexAccept;
-
-    std::list<unsigned int> mlMapPointMatchCount;
 };
 
 } //namespace ORB_SLAM
