@@ -121,6 +121,8 @@ protected:
 
     bool mbAcceptKeyFrames;
     std::mutex mMutexAccept;
+
+    std::ofstream mfTiming;   //Kwame: stream for timing
 };
 
 } //namespace ORB_SLAM

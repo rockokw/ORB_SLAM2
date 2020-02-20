@@ -41,6 +41,9 @@ LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, 
     mbStopGBA(false), mpThreadGBA(NULL), mbFixScale(bFixScale), mnFullBAIdx(0)
 {
     mnCovisibilityConsistencyTh = 3;
+
+    mfTiming.open("time_loop_closing.txt", ios::out | ios::trunc);
+    mfTiming << std::setprecision(6);
 }
 
 void LoopClosing::SetTracker(Tracking *pTracker)
@@ -63,6 +66,7 @@ void LoopClosing::Run()
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+
             // Detect loop candidates and check covisibility consistency
             if(DetectLoop())
             {
@@ -70,8 +74,14 @@ void LoopClosing::Run()
                // In the stereo/RGBD case s=1
                if(ComputeSim3())
                {
+                   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
                    // Perform loop fusion and pose graph optimization
                    CorrectLoop();
+
+                   std::chrono::steady_clock::time_point finish = std::chrono::steady_clock::now();
+                   std::chrono::duration<double> time_span = finish - start;
+                   mfTiming << time_span.count() << std::endl;
                }
             }
         }
@@ -85,6 +95,7 @@ void LoopClosing::Run()
     }
 
     SetFinish();
+    mfTiming.close();
 }
 
 void LoopClosing::InsertKeyFrame(KeyFrame *pKF)

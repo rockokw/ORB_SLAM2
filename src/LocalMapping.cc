@@ -32,6 +32,8 @@ LocalMapping::LocalMapping(Map *pMap, const float bMonocular):
     mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true)
 {
+    mfTiming.open("time_local_mapping.txt", ios::out | ios::trunc);
+    mfTiming << std::setprecision(6);
 }
 
 void LocalMapping::SetLoopCloser(LoopClosing* pLoopCloser)
@@ -57,6 +59,8 @@ void LocalMapping::Run()
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+            std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
             // BoW conversion and insertion in Map
             ProcessNewKeyFrame();
 
@@ -85,6 +89,10 @@ void LocalMapping::Run()
             }
 
             mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
+
+            std::chrono::steady_clock::time_point finish = std::chrono::steady_clock::now();
+            std::chrono::duration<double> time_span = finish - start;
+            mfTiming << time_span.count() << std::endl;
         }
         else if(Stop())
         {
@@ -109,6 +117,7 @@ void LocalMapping::Run()
     }
 
     SetFinish();
+    mfTiming.close();
 }
 
 void LocalMapping::InsertKeyFrame(KeyFrame *pKF)

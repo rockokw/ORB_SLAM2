@@ -149,11 +149,14 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
         mState = LOST;
 
     mfMC.open("mp_match_count.txt", ios::out | ios::trunc);
+    mfTiming.open("time_tracking.txt", ios::out | ios::trunc);
+    mfTiming << std::setprecision(6);
 }
 
 void Tracking::Cleanup()
 {
     mfMC.close();
+    mfTiming.close();
 }
 
 void Tracking::SetLocalMapper(LocalMapping *pLocalMapper)
@@ -174,6 +177,8 @@ void Tracking::SetViewer(Viewer *pViewer)
 
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
 {
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
     mImGray = imRectLeft;
     cv::Mat imGrayRight = imRectRight;
 
@@ -207,6 +212,10 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
+
+    std::chrono::steady_clock::time_point finish = std::chrono::steady_clock::now();
+    std::chrono::duration<double> time_span = finish - start;
+    mfTiming << time_span.count() << std::endl;
 
     return mCurrentFrame.mTcw.clone();
 }

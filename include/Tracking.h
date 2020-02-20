@@ -219,6 +219,7 @@ protected:
     list<MapPoint*> mlpTemporalPoints;
 
     ofstream mfMC;   //Kwame: stream for MapPoint match counts
+    ofstream mfTiming;   //Kwame: stream for timing
 };
 
 } //namespace ORB_SLAM
